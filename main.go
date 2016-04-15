@@ -36,25 +36,31 @@ func main() {
 	repo = strflag("repo", "voipgrid", "github repository to bump version of")
 	token = strflag("token", "", "github access token")
 	flag.Parse()
+
 	client := github.NewClient(oauth2.NewClient(oauth2.NoContext,
 		oauth2.StaticTokenSource(&oauth2.Token{AccessToken: *token})))
+
 	branchNames, err := currentBranchNames(client, *owner, *repo)
 	if err != nil {
 		log.Fatalf("error fetching branchnames: %v", err)
 	}
+
 	next := nextBranch(*prefix, branchNames...)
 	if next == "" {
 		log.Fatalf("no release branches found in %q", branchNames)
 	}
+
 	develop, _, err := client.Git.GetRef(*owner, *repo, "refs/heads/develop")
 	if err != nil {
 		log.Fatalf("error finding refs/heads/develop: %v", err)
 	}
+
 	r := "refs/heads/" + next
 	ref := github.Reference{
 		Ref:    &r,
 		Object: develop.Object,
 	}
+
 	_, _, err = client.Git.CreateRef(*owner, *repo, &ref)
 	if err != nil {
 		log.Fatalf("error creating ref %q: %v", r, err)
@@ -68,6 +74,7 @@ func currentBranchNames(client *github.Client, owner, repo string) (branchNames 
 			branches []github.Branch
 			resp     *github.Response
 		)
+
 		branches, resp, err = client.Repositories.ListBranches(owner, repo, opt)
 		if err != nil {
 			return
