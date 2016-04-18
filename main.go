@@ -14,6 +14,9 @@ import (
 
 const envPrefix = "DAVE_"
 
+// strflag is like flag.String, with value overridden by an environment
+// variable (when present). e.g. with name token, the env var used as default
+// is DAVE_TOKEN, if present in env.
 func strflag(name string, value string, usage string) *string {
 	if v, ok := os.LookupEnv(envPrefix + strings.ToUpper(name)); ok {
 		return flag.String(name, v, usage)
@@ -26,6 +29,7 @@ var (
 	owner  *string
 	repo   *string
 	token  *string
+	dryrun *bool
 )
 
 func main() {
@@ -35,10 +39,12 @@ func main() {
 	owner = strflag("owner", "VoIPGRID", "github owner to find repo under")
 	repo = strflag("repo", "voipgrid", "github repository to bump version of")
 	token = strflag("token", "", "github access token")
+	dryrun = flag.Bool("dryrun", false, "don't actually create the branch, just print")
 	flag.Parse()
 
-	client := github.NewClient(oauth2.NewClient(oauth2.NoContext,
-		oauth2.StaticTokenSource(&oauth2.Token{AccessToken: *token})))
+	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: *token})
+	oc := oauth2.NewClient(oauth2.NoContext, ts)
+	client := github.NewClient(oc)
 
 	branchNames, err := currentBranchNames(client, *owner, *repo)
 	if err != nil {
@@ -55,6 +61,11 @@ func main() {
 		log.Fatalf("error finding refs/heads/develop: %v", err)
 	}
 
+	if *dryrun {
+		log.Printf("next branch: %q pointing to %s", next, *develop.Object.SHA)
+		return
+	}
+
 	r := "refs/heads/" + next
 	ref := github.Reference{
 		Ref:    &r,
@@ -67,6 +78,8 @@ func main() {
 	}
 }
 
+// currentBranchNames returns all available branch names in the repo, by
+// fetching all branches from Github.
 func currentBranchNames(client *github.Client, owner, repo string) (branchNames []string, err error) {
 	opt := &github.ListOptions{}
 	for {
@@ -89,6 +102,13 @@ func currentBranchNames(client *github.Client, owner, repo string) (branchNames 
 	}
 }
 
+// nextBranch takes a prefix and a list of branchNames, and tries to find all
+// branchNames that start with prefix, followed by a Semantic Version number.
+// It takes the highest version available in the list of branchNames, and
+// returns the next minor version's branchname.
+//
+// If no branchNames match the prefix + semver, this function will return an
+// empty string.
 func nextBranch(prefix string, branchNames ...string) string {
 	var versions []*semver.Version
 	for _, name := range branchNames {
