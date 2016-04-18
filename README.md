@@ -23,7 +23,8 @@ Make sure `$GOPATH/bin` is in your `$PATH`.
         	github access token
 
 You'll need a Github access token, which you can generate
-[here](https://github.com/settings/tokens).
+[here](https://github.com/settings/tokens). Dave only needs `repo` scope to
+work.
 
 All flags have an environment variable that sets the default, so setting
 `DAVE_REPO` also changes the repo Dave looks at. Flags override environment
