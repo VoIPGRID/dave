@@ -12,7 +12,11 @@ Quite simple: get [Go](https://golang.org/dl), set a `$GOPATH`, and run
 Make sure `$GOPATH/bin` is in your `$PATH`.
 
     $ dave -h
-    Usage of dave:
+    Usage of /home/ruben/go/bin/dave:
+      -branch string
+        	branch to base release branch on (default "develop")
+      -dryrun
+        	don't actually create the branch, just print
       -owner string
         	github owner to find repo under (default "VoIPGRID")
       -prefix string
