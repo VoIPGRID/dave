@@ -12,7 +12,7 @@ Quite simple: get [Go](https://golang.org/dl), set a `$GOPATH`, and run
 Make sure `$GOPATH/bin` is in your `$PATH`.
 
     $ dave -h
-    Usage of /home/ruben/go/bin/dave:
+    Usage of dave:
       -branch string
         	branch to base release branch on (default "develop")
       -dryrun
