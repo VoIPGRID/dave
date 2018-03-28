@@ -29,6 +29,7 @@ var (
 	owner  *string
 	repo   *string
 	token  *string
+	branch *string
 	dryrun *bool
 )
 
@@ -39,6 +40,7 @@ func main() {
 	owner = strflag("owner", "VoIPGRID", "github owner to find repo under")
 	repo = strflag("repo", "voipgrid", "github repository to bump version of")
 	token = strflag("token", "", "github access token")
+	branch = strflag("branch", "develop", "branch to base release branch on")
 	dryrun = flag.Bool("dryrun", false, "don't actually create the branch, just print")
 	flag.Parse()
 
@@ -56,20 +58,20 @@ func main() {
 		log.Fatalf("no release branches found in %q", branchNames)
 	}
 
-	develop, _, err := client.Git.GetRef(*owner, *repo, "refs/heads/develop")
+	refBranch, _, err := client.Git.GetRef(*owner, *repo, "refs/heads/" + *branch)
 	if err != nil {
 		log.Fatalf("error finding refs/heads/develop: %v", err)
 	}
 
 	if *dryrun {
-		log.Printf("next branch: %q pointing to %s", next, *develop.Object.SHA)
+		log.Printf("next branch: %q pointing to %s", next, *refBranch.Object.SHA)
 		return
 	}
 
 	r := "refs/heads/" + next
 	ref := github.Reference{
 		Ref:    &r,
-		Object: develop.Object,
+		Object: refBranch.Object,
 	}
 
 	_, _, err = client.Git.CreateRef(*owner, *repo, &ref)
