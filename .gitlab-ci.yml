@@ -1,0 +1,20 @@
+stages:
+  - publish
+
+variables:
+  # Set a global environment variable for the image tag to use.
+  # To ensure we get a unique tag for every build, include the Git tag in the image tag.
+  DOCKER_IMAGE_TAG: release-$CI_COMMIT_SHORT_SHA
+
+# Build and push a Docker image and push it to GitLab.
+gitlab-registry:
+  stage: publish
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  before_script:
+    # Inject the credentials for GitLab's registry into the builder.
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+  script:
+    # Set the build context, Dockerfile and target image tag.
+    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY_IMAGE:$DOCKER_IMAGE_TAG
